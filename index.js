@@ -45,13 +45,15 @@ async function main() {
             { name: "John Doe" },
             { $inc: { rating: 0.1 } }
         );
-        
         console.log(`Driver updated with result: ${updateResult}`);
         
-    
-    } finally {
-        await client.close();
-    }
+        const deleteResult = await db.collection('drivers').deleteOne({ isAvailable: false });
+        console.log(`Driver deleted with result: ${deleteResult}`);
+        
+        } finally {
+            await client.close();
+        }
+        
     
 }
 
