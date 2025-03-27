@@ -15,9 +15,6 @@ const drivers = [
     }
 ];
 
-// show the data in the console
-console.log(drivers);
-
 // Show all drivers' names in the console
 drivers.forEach(driver => console.log(driver.name));
 
@@ -30,11 +27,9 @@ drivers.push({
 });
 
 async function main() {
-
-    // Replace <connection-string> with your MongoDB URI
     const uri = "mongodb://localhost:27017";
     const client = new MongoClient(uri);
-
+    
     try {
         await client.connect();
         const db = client.db("testDB");
@@ -46,10 +41,17 @@ async function main() {
             console.log(`New driver created with result: ${result}`);
         });
     
+        const availableDrivers = await db.collection('drivers').find({
+            isAvailable: true,
+            rating: { $gte: 4.5 }
+        }).toArray();
+        console.log("Available drivers:", availableDrivers);
+    
     } finally {
         await client.close();
     }
-
+    
 }
 
-main();
+main().catch(console.error);
+
