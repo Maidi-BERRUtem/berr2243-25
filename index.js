@@ -1,61 +1,76 @@
+const express = require('express');
 const { MongoClient } = require('mongodb');
+const port = 3000;
 
-const drivers = [
-    {
-        name: "John Doe",
-        vehicleType: "Sedan",
-        isAvailable: true,
-        rating: 4.8
-    },
-    {
-        name: "Alice Smith",
-        vehicleType: "SUV",
-        isAvailable: false,
-        rating: 4.5
-    }
-];
+const app = express();
+app.use(express.json());
 
-// Show all drivers' names in the console
-drivers.forEach(driver => console.log(driver.name));
+let db;
 
-// Add an additional driver
-drivers.push({
-    name: "Bob",
-    vehicleType: "Taxi",
-    isAvailable: true,
-    rating: 4.7
-});
+async function connectToMongoDB() {
+  const uri = "mongodb://localhost:27017";
+  const client = new MongoClient(uri);
 
-async function main() {
-    const uri = "mongodb://localhost:27017";
-    const client = new MongoClient(uri);
-    
-    try {
-        await client.connect();
-        const db = client.db("testDB");
-    
-        const driversCollection = db.collection("drivers");
-    
-        drivers.forEach(async (driver) => {
-            const result = await driversCollection.insertOne(driver);
-            console.log(`New driver created with result: ${result}`);
-        });
-    
-        const updateResult = await db.collection('drivers').updateOne(
-            { name: "John Doe" },
-            { $inc: { rating: 0.1 } }
-        );
-        console.log(`Driver updated with result: ${updateResult}`);
-        
-        const deleteResult = await db.collection('drivers').deleteOne({ isAvailable: false });
-        console.log(`Driver deleted with result: ${deleteResult}`);
-        
-        } finally {
-            await client.close();
-        }
-        
-    
+  try {
+    await client.connect();
+    console.log("Connected to MongoDB!");
+
+    db = client.db("testDB");
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
-main().catch(console.error);
+connectToMongoDB();
 
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+// GET /rides – Fetch all rides
+app.get('/rides', async (req, res) => {
+    try {
+      const rides = await db.collection('rides').find().toArray();
+      res.status(200).json(rides);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch rides" });
+    }
+  });
+  
+  // PATCH /rides/:id – Update ride status
+app.patch('/rides/:id', async (req, res) => {
+    try {
+      const result = await db.collection('rides').updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { status: req.body.status } }
+      );
+  
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+  
+      res.status(200).json({ updated: result.modifiedCount });
+    } catch (err) {
+      // Handle invalid ID format or DB errors
+      res.status(400).json({ error: "Invalid ride ID or data" });
+    }
+  });
+
+  // DELETE /rides/:id — Cancel a ride
+app.delete('/rides/:id', async (req, res) => {
+    try {
+      const result = await db.collection('rides').deleteOne(
+        { _id: new ObjectId(req.params.id) }
+      );
+  
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+  
+      res.status(200).json({ deleted: result.deletedCount });
+    } catch (err) {
+      res.status(400).json({ error: "Invalid ride ID" });
+    }
+  });
+  
+  
