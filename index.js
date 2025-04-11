@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb'); // Include ObjectId
 const port = 3000;
 
 const app = express();
@@ -35,13 +35,24 @@ app.get('/rides', async (req, res) => {
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch rides" });
     }
+});
+
+// POST /rides – Create a new ride
+app.post('/rides', async (req, res) => {
+    try {
+    const result = await db.collection('rides').insertOne(req.body);
+      res.status(201).json({id: result.insertedId });
+    } catch (err) {
+      res.status(400).json({ error: "Invalid ride data" });
+    }
   });
   
-  // PATCH /rides/:id – Update ride status
+
+// PATCH /rides/:id – Update ride status
 app.patch('/rides/:id', async (req, res) => {
     try {
       const result = await db.collection('rides').updateOne(
-        { _id: new ObjectId(req.params.id) },
+        { _id: new ObjectId(req.params.id) }, // Convert string ID to ObjectId
         { $set: { status: req.body.status } }
       );
   
@@ -51,16 +62,15 @@ app.patch('/rides/:id', async (req, res) => {
   
       res.status(200).json({ updated: result.modifiedCount });
     } catch (err) {
-      // Handle invalid ID format or DB errors
       res.status(400).json({ error: "Invalid ride ID or data" });
     }
-  });
+});
 
-  // DELETE /rides/:id — Cancel a ride
+// DELETE /rides/:id — Cancel a ride
 app.delete('/rides/:id', async (req, res) => {
     try {
       const result = await db.collection('rides').deleteOne(
-        { _id: new ObjectId(req.params.id) }
+        { _id: new ObjectId(req.params.id) } // Convert string ID to ObjectId
       );
   
       if (result.deletedCount === 0) {
@@ -71,6 +81,7 @@ app.delete('/rides/:id', async (req, res) => {
     } catch (err) {
       res.status(400).json({ error: "Invalid ride ID" });
     }
-  });
+});
+
   
   
