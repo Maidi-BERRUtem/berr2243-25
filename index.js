@@ -1,334 +1,140 @@
-const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
-const port = 3000;
-
-const app = express();
-app.use(express.json());
-
-let db;
-
-async function connecToMongoDB() {
-    const uri = 'mongodb://localhost:27017/';
-    const client = new MongoClient(uri);
-
-    try {
-        await client.connect();
-        console.log('Connected to MongoDB');
-        
-        db = client.db('GoRideDB');
-    } catch (error) {
-        console.error('Error:', error);
-    }
+{
+	"info": {
+		"_postman_id": "a70bdf42-a0dd-44a9-a973-e27f89caebb8",
+		"name": "GoRide - week-6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43913465",
+		"_collection_link": "https://fit-1525979.postman.co/workspace/Fit's-Workspace~ecb81a26-f3bd-442c-8acd-754d6ad58740/collection/43913465-a70bdf42-a0dd-44a9-a973-e27f89caebb8?action=share&source=collection_link&creator=43913465"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"username\": \"Fit\",\r\n\"password\": \"Password123\",\r\n\"role\": \"user\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"username\": \"Fit\",\r\n\"password\": \"Password123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"login"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODM0YjQ5MjExZTIzNDBjMzNkOWYxNzEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0ODI4NjkyMCwiZXhwIjoxNzQ4MjkwNTIwfQ.QnzJqSm-jM7kH-CLnaC7v7L7on6CqxWTueOs88lBmBM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"username\": \"Fit\",\r\n\"password\": \"Password123\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/admin/accounts/6834b49211e2340c33d9f171",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"admin",
+						"accounts",
+						"6834b49211e2340c33d9f171"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
 }
-connecToMongoDB();
-
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
-
-// --- Register and Login --- //
-
-
-// POST /register - Create a new user or driver
-app.post('/register', async (req, res) => {
-    try {
-        const { username, password, role } = req.body;
-
-        if (!username || !password || !role) {
-            return res.status(400).json({ error: "Username, password, and role are required" });
-        }
-
-        if (!['user', 'driver'].includes(role)) {
-            return res.status(400).json({ error: "Invalid role. Must be 'user' or 'driver'" });
-        }
-
-        const existingUser = await db.collection('users').findOne({ username });
-        if (existingUser) {
-            return res.status(409).json({ error: "Username already exists" });
-        }
-
-        const result = await db.collection('users').insertOne({ username, password, role });
-        res.status(201).json({ id: result.insertedId, message: `${role} registered successfully` });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to register" });
-    }
-});
-
-// POST /login - Authenticate a user with role
-app.post('/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        if (!username || !password) {
-            return res.status(400).json({ error: "Username and password are required" });
-        }
-
-        const user = await db.collection('users').findOne({ username });
-        if (!user || user.password !== password) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        res.status(200).json({ message: "Login successful", role: user.role });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to login" });
-    }
-});
-
-// --- User Endpoints --- //
-
-// POST /rides - Create a new ride
-app.post('/rides', async (req, res) => {
-    try {
-        const { id, destination, status } = req.body;
-        if (!id || !destination || !status) {
-            return res.status(400).json({ error: "User ID, destination and status are required" });
-        }
-
-        const ride = { id, destination, status };
-        const result = await db.collection('rides').insertOne(ride);
-
-        res.status(201).json({ rideID: result.insertedId });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to create ride" });
-    }
-});
-
-// PATCH /rides/car/:rideID - Update a ride's car
-app.patch('/rides/car/:rideID', async (req, res) => {
-    try {
-        const { rideID } = req.params;
-        const { car } = req.body;
-
-        if (!ObjectId.isValid(rideID)) {
-            return res.status(400).json({ error: "Invalid ride ID format" });
-        }
-
-        const result = await db.collection('rides').updateOne(
-            { _id: new ObjectId(rideID) },
-            { $set: { car } }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: "Ride not found" });
-        }
-
-        res.status(200).json({ updated: result.modifiedCount });
-
-    } catch (error) {
-        res.status(400).json({ error: "Invalid ride ID or data" });
-    }
-});
-
-// POST /rides/pay/:rideID - Pay for a ride
-app.post('/rides/pay/:rideID', async (req, res) => {
-    try {
-        const { rideID } = req.params;
-        const { paymentMethod, amount } = req.body;
-
-        if (!ObjectId.isValid(rideID) || !paymentMethod || !amount) {
-            return res.status(400).send("Bad Request");
-        }
-
-        const result = await db.collection('rides').updateOne(
-            { _id: new ObjectId(rideID), paymentStatus: { $ne: 'Paid' } },
-            { $set: { paymentMethod, paymentStatus: 'Paid', amount } }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(402).send("Payment Required");
-        }
-
-        res.status(200).send("OK");
-        } catch (error) {
-        res.status(500).send("Internal Server Error");
-        }
-    });
-
-// GET /rides/:id/history - Fetch ride history for a user
-app.get('/rides/:id/history', async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid user ID format" });
-        }
-
-        const rides = await db.collection('rides').find({ id: id }).toArray();
-        if (rides.length === 0) {
-            return res.status(404).json({ error: "No rides found for this user" });
-        }
-        res.status(200).json(rides);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch ride history" });
-    }
-});
-
-// --- Driver Endpoints --- //
-
-// PATCH /rides/:rideID/accept - Accept a ride
-app.patch('/rides/:rideID/accept', async (req, res) => {
-    try {
-        const { rideID } = req.params;
-        const { id } = req.body;
-
-        if (!ObjectId.isValid(rideID) || !id) {
-            return res.status(400).json({ error: "Invalid ride ID or driver ID" });
-        }
-
-        const result = await db.collection('rides').updateOne(
-            { _id: new ObjectId(rideID), status: 'Pending' },
-            { $set: { status: 'Accepted', id } }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: "Ride not found or already accepted" });
-        }
-
-        res.status(200).json({ message: "Ride accepted successfully" });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to accept ride" });
-    }
-});
-
-// PATCH /rides/:rideID/cancel - Cancel a ride
-app.patch('/rides/:rideID/cancel', async (req, res) => {
-    try {
-        const { rideID } = req.params;
-        const { id } = req.body;
-
-        if (!ObjectId.isValid(rideID) || !id) {
-            return res.status(400).json({ error: "Invalid ride ID or driver ID" });
-        }
-
-        const result = await db.collection('rides').updateOne(
-            { _id: new ObjectId(rideID), status: 'Accepted' },
-            { $set: { status: 'Cancelled', id } }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: "Ride not found or already cancelled" });
-        }
-
-        res.status(200).json({ message: "Ride cancelled successfully" });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to cancel ride" });
-    }
-});
-
-// GET /rides/:id/history - Fetch ride history for a driver
-app.get('/rides/:id/history', async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid driver ID format" });
-        }
-
-        const rides = await db.collection('rides').find({ id: id }).toArray();
-        if (rides.length === 0) {
-            return res.status(404).json({ error: "No rides found for this driver" });
-        }
-        res.status(200).json(rides);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch ride history" });
-    }
-});
-
-// --- Admin Endpoints --- //
-
-// GET /admin/accounts - Fetch all user accounts
-app.get('/admin/accounts', async (req, res) => {
-    try {
-        const users = await db.collection('users').find().toArray();
-        if (users.length === 0) {
-            return res.status(403).json({ error: "No user accounts found" });
-        }
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch user accounts" });
-    }
-});
-
-// POST /admin/accounts - Create a new user account
-app.post('/admin/accounts', async (req, res) => {
-    try {
-        const { username, password, role } = req.body;
-
-        if (!username || !password || !role) {
-            return res.status(400).json({ error: "Username, password, and role are required" });
-        }
-
-        if (!['user', 'driver'].includes(role)) {
-            return res.status(400).json({ error: "Invalid role. Must be 'user' or 'driver'" });
-        }
-
-        const existingUser = await db.collection('users').findOne({ username });
-        if (existingUser) {
-            return res.status(409).json({ error: "Username already exists" });
-        }
-
-        const result = await db.collection('users').insertOne({ username, password, role });
-        res.status(201).json({ id: result.insertedId, message: `${role} registered successfully` });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to register" });
-    }
-});
-
-// PATCH /admin/accounts/:id - Update a user account
-app.patch('/admin/accounts/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { username, password, role } = req.body;
-
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid user ID format" });
-        }
-
-        const updateData = {};
-        if (username) updateData.username = username;
-        if (password) updateData.password = password;
-        if (role) updateData.role = role;
-
-        const result = await db.collection('users').updateOne(
-            { _id: new ObjectId(id) },
-            { $set: updateData }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        res.status(200).json({ message: "User account updated successfully" });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update user account" });
-    }
-});
-
-// DELETE /admin/accounts/:id - Delete a user account
-app.delete('/admin/accounts/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid user ID format" });
-        }
-
-        const result = await db.collection('users').deleteOne({ _id: new ObjectId(id) });
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        res.status(200).json({ message: "User account deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to delete user account" });
-    }
-});
-
-// GET /admin/reports - Fetch all ride reports
-app.get('/admin/reports', async (req, res) => {
-    try {
-        const rides = await db.collection('rides').find().toArray();
-        if (rides.length === 0) {
-            return res.status(403).json({ error: "No ride reports found" });
-        }
-        res.status(200).json(rides);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch ride reports" });
-    }
-});
