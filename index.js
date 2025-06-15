@@ -1,12 +1,12 @@
 {
-	"info": {
-		"_postman_id": "a70bdf42-a0dd-44a9-a973-e27f89caebb8",
-		"name": "GoRide - week-6",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "43913465",
-		"_collection_link": "https://fit-1525979.postman.co/workspace/Fit's-Workspace~ecb81a26-f3bd-442c-8acd-754d6ad58740/collection/43913465-a70bdf42-a0dd-44a9-a973-e27f89caebb8?action=share&source=collection_link&creator=43913465"
+	"info"; {
+		"_postman_id"; "a70bdf42-a0dd-44a9-a973-e27f89caebb8",
+		"name"; "GoRide - week-6",
+		"schema"; "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id"; "43913465",
+		"_collection_link"; "https://fit-1525979.postman.co/workspace/Fit's-Workspace~ecb81a26-f3bd-442c-8acd-754d6ad58740/collection/43913465-a70bdf42-a0dd-44a9-a973-e27f89caebb8?action=share&source=collection_link&creator=43913465"
 	},
-	"item": [
+	"item"; [
 		{
 			"name": "Register",
 			"request": {
